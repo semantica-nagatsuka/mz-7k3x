@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>シフト希望提出</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+/* ===== CSS Variables (config.js の値で上書き) ===== */
+:root {
+  --accent: #c8a876;
+  --accent-light: #f5eedd;
+  --accent-dark: #8b7355;
+  --bg1: #0f0f1a;
+  --bg2: #1a1a2e;
+  --bg-card: #16213e;
+  --text1: #eaeaea;
+  --text2: #9a9ab0;
+  --border: #2a2a4a;
+  --success: #4caf50;
+  --warning: #ff9800;
+  --danger: #ef5350;
+  --font: 'Noto Sans JP', sans-serif;
+  --radius: 12px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  background: var(--bg1);
+  color: var(--text1);
+  font-family: var(--font);
+  min-height: 100dvh;
+  padding: 0 0 80px;
+  -webkit-tap-highlight-color: transparent;
+}
+a { color: var(--accent); }
+
+/* ===== Layout ===== */
+.container { max-width: 480px; margin: 0 auto; padding: 0 16px; }
+
+/* ===== Header ===== */
+.header {
+  text-align: center;
+  padding: 28px 16px 20px;
+  background: linear-gradient(180deg, var(--bg2) 0%, var(--bg1) 100%);
+}
+.header .logo { height: 48px; margin-bottom: 8px; }
+.header h1 {
+  font-size: 1.3rem; font-weight: 700; letter-spacing: 0.06em;
+  background: linear-gradient(135deg, var(--accent), #e8d5b0);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.header .sub { font-size: 0.73rem; color: var(--text2); margin-top: 4px; }
+
+/* ===== Notices ===== */
+.notice-area { margin-bottom: 8px; }
+.notice-item {
+  padding: 12px 14px; margin: 8px 16px; border-radius: var(--radius);
+  font-size: 0.85rem; line-height: 1.5; position: relative;
+}
+.notice-item.urgent {
+  background: rgba(239,83,80,0.12); border-left: 4px solid var(--danger); color: #ffaaaa;
+}
+.notice-item.normal {
+  background: rgba(200,168,118,0.10); border-left: 4px solid var(--accent); color: var(--text1);
+}
+.notice-item .notice-label {
+  font-size: 0.7rem; font-weight: 700; margin-bottom: 4px; text-transform: uppercase;
+}
+.notice-item.urgent .notice-label { color: var(--danger); }
+.notice-item.normal .notice-label { color: var(--accent); }
+.notice-dismiss {
+  position: absolute; top: 8px; right: 10px; background: none; border: none;
+  color: var(--text2); font-size: 1.1rem; cursor: pointer; padding: 4px;
+}
+
+/* ===== Screen visibility ===== */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ===== Auth Screen ===== */
+.auth-box {
+  background: var(--bg2); border-radius: var(--radius); padding: 28px 20px;
+  margin: 20px 16px; border: 1px solid var(--border);
+}
+.auth-box h2 {
+  font-size: 1.05rem; font-weight: 700; margin-bottom: 16px; text-align: center;
+  color: var(--accent);
+}
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block; font-size: 0.8rem; color: var(--text2); margin-bottom: 6px; font-weight: 500;
+}
+.form-input {
+  width: 100%; padding: 12px 14px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg1); color: var(--text1);
+  font-size: 1rem; font-family: var(--font); transition: border-color 0.2s;
+}
+.form-input:focus { outline: none; border-color: var(--accent); }
+.form-input::placeholder { color: var(--text2); opacity: 0.6; }
+.pin-input {
+  text-align: center; letter-spacing: 0.6em; font-size: 1.4rem; font-weight: 700;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: block; width: 100%; padding: 14px; border-radius: 8px; border: none;
+  font-size: 0.95rem; font-weight: 700; font-family: var(--font);
+  cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #1a1a2e;
+}
+.btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-secondary {
+  background: var(--bg2); color: var(--text1); border: 1px solid var(--border);
+}
+.btn-secondary:active { background: var(--bg-card); }
+.btn-danger {
+  background: rgba(239,83,80,0.15); color: var(--danger); border: 1px solid rgba(239,83,80,0.3);
+}
+.btn-sm { padding: 10px 16px; font-size: 0.82rem; width: auto; display: inline-block; }
+
+/* ===== Status Badge ===== */
+.status-badge {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-radius: 8px; margin: 12px 0;
+  font-size: 0.85rem; font-weight: 600;
+}
+.status-badge.submitted {
+  background: rgba(76,175,80,0.12); border: 1px solid rgba(76,175,80,0.3); color: #81c784;
+}
+.status-badge.locked {
+  background: rgba(239,83,80,0.10); border: 1px solid rgba(239,83,80,0.25); color: #ef9a9a;
+}
+.status-badge .badge-icon { font-size: 1.1rem; }
+
+/* ===== Deadline Banner ===== */
+.deadline-banner {
+  padding: 10px 14px; border-radius: 8px; margin: 8px 0;
+  font-size: 0.8rem; font-weight: 600; text-align: center;
+}
+.deadline-banner.open { background: rgba(76,175,80,0.12); color: #81c784; }
+.deadline-banner.late { background: rgba(255,152,0,0.15); color: #ffb74d; }
+.deadline-banner.closed { background: rgba(239,83,80,0.12); color: #ef9a9a; }
+
+/* ===== Week Selector ===== */
+.week-selector {
+  margin: 16px 0; display: flex; align-items: center; gap: 10px;
+}
+.week-selector label { font-size: 0.8rem; color: var(--text2); white-space: nowrap; }
+.week-selector select {
+  flex: 1; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg2); color: var(--text1);
+  font-size: 0.9rem; font-family: var(--font);
+}
+
+/* ===== Summary View ===== */
+.summary-toggle {
+  display: flex; justify-content: flex-end; margin: 8px 0;
+}
+.summary-toggle button {
+  background: none; border: 1px solid var(--border); color: var(--text2);
+  padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer;
+  font-family: var(--font);
+}
+.summary-toggle button.active { border-color: var(--accent); color: var(--accent); }
+.summary-table {
+  width: 100%; border-collapse: collapse; margin: 8px 0 16px;
+  background: var(--bg2); border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--border);
+}
+.summary-table th {
+  background: var(--bg-card); padding: 8px 10px; font-size: 0.72rem;
+  color: var(--text2); font-weight: 600; text-align: left;
+}
+.summary-table td {
+  padding: 8px 10px; font-size: 0.8rem; border-top: 1px solid var(--border);
+}
+.summary-table .status-available { color: var(--success); font-weight: 600; }
+.summary-table .status-off { color: var(--danger); }
+.summary-table .status-pending { color: var(--warning); }
+.summary-table .status-null { color: var(--text2); }
+
+/* ===== Day Card ===== */
+.day-cards { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+.day-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; transition: border-color 0.2s;
+}
+.day-card.status-available { border-left: 4px solid var(--success); }
+.day-card.status-off { border-left: 4px solid var(--danger); }
+.day-card.status-pending { border-left: 4px solid var(--warning); }
+.day-card .day-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+}
+.day-card .day-label {
+  font-weight: 700; font-size: 0.95rem;
+}
+.day-card .day-date { font-size: 0.75rem; color: var(--text2); }
+
+/* Status Radio */
+.status-group {
+  display: flex; gap: 6px; margin-bottom: 10px;
+}
+.status-radio {
+  flex: 1; text-align: center;
+}
+.status-radio input { display: none; }
+.status-radio label {
+  display: block; padding: 8px 4px; border-radius: 6px; font-size: 0.78rem;
+  font-weight: 600; cursor: pointer; border: 1px solid var(--border);
+  background: var(--bg1); color: var(--text2); transition: all 0.2s;
+}
+.status-radio input:checked + label.lbl-available {
+  background: rgba(76,175,80,0.18); border-color: var(--success); color: var(--success);
+}
+.status-radio input:checked + label.lbl-off {
+  background: rgba(239,83,80,0.15); border-color: var(--danger); color: var(--danger);
+}
+.status-radio input:checked + label.lbl-pending {
+  background: rgba(255,152,0,0.15); border-color: var(--warning); color: var(--warning);
+}
+
+/* Time selects */
+.time-row {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 8px;
+}
+.time-row label { font-size: 0.75rem; color: var(--text2); min-width: 32px; }
+.time-row select {
+  flex: 1; padding: 8px 10px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--bg1); color: var(--text1);
+  font-size: 0.85rem; font-family: var(--font);
+}
+.time-row select:disabled { opacity: 0.3; }
+.time-row .time-sep { color: var(--text2); font-size: 0.85rem; }
+
+/* Day note */
+.day-note-input {
+  width: 100%; padding: 8px 10px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--bg1); color: var(--text1);
+  font-size: 0.82rem; font-family: var(--font); resize: none;
+}
+.day-note-input::placeholder { color: var(--text2); opacity: 0.5; }
+
+/* ===== Bulk Buttons ===== */
+.bulk-area {
+  display: flex; gap: 10px; margin: 16px 0;
+}
+.bulk-area .btn { flex: 1; font-size: 0.82rem; padding: 12px 8px; }
+
+/* ===== Week Note ===== */
+.week-note-area { margin: 16px 0; }
+.week-note-area label { display: block; font-size: 0.8rem; color: var(--text2); margin-bottom: 6px; }
+.week-note-area textarea {
+  width: 100%; min-height: 70px; padding: 12px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg2); color: var(--text1);
+  font-size: 0.85rem; font-family: var(--font); resize: vertical;
+}
+
+/* ===== Submit Area ===== */
+.submit-area { margin: 24px 0; }
+
+/* ===== Modal ===== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: none; align-items: center; justify-content: center; z-index: 100;
+  padding: 16px;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px 20px; width: 100%; max-width: 400px; max-height: 85vh; overflow-y: auto;
+}
+.modal h3 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; color: var(--accent); }
+.modal p { font-size: 0.85rem; color: var(--text2); margin-bottom: 12px; line-height: 1.5; }
+.modal-actions {
+  display: flex; gap: 10px; margin-top: 20px;
+}
+.modal-actions .btn { flex: 1; }
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  padding: 12px 24px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+  z-index: 200; opacity: 0; transition: opacity 0.3s;
+  pointer-events: none; max-width: 90%;
+}
+.toast.show { opacity: 1; }
+.toast.success { background: var(--success); color: #fff; }
+.toast.error { background: var(--danger); color: #fff; }
+.toast.info { background: var(--accent); color: #1a1a2e; }
+
+/* ===== Confirmation Detail List ===== */
+.confirm-list { list-style: none; max-height: 45vh; overflow-y: auto; }
+.confirm-list li {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.82rem;
+}
+.confirm-list li:last-child { border-bottom: none; }
+.confirm-list .cl-day { font-weight: 600; }
+.confirm-list .cl-status { font-size: 0.78rem; }
+
+/* ===== Locked overlay ===== */
+.locked-overlay {
+  position: relative;
+}
+.locked-overlay::after {
+  content: ''; position: absolute; inset: 0; border-radius: var(--radius);
+  background: rgba(15,15,26,0.45); pointer-events: none;
+}
+.day-card.locked .form-input,
+.day-card.locked select,
+.day-card.locked textarea,
+.day-card.locked input { pointer-events: none; opacity: 0.45; }
+
+/* ===== Loading ===== */
+.spinner {
+  display: inline-block; width: 20px; height: 20px;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay {
+  position: fixed; inset: 0; background: rgba(15,15,26,0.8);
+  display: none; align-items: center; justify-content: center; z-index: 300;
+}
+.loading-overlay.show { display: flex; }
+</style>
+</head>
+<body>
+
+<!-- ===== Toast ===== -->
+<div id="toast" class="toast"></div>
+
+<!-- ===== Loading ===== -->
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="spinner" style="width:36px;height:36px;border-width:3px;"></div>
+</div>
+
+<!-- ===== Header ===== -->
+<div class="header" id="appHeader">
+  <h1 id="headerTitle">シフト希望提出</h1>
+  <p class="sub" id="headerSub">Club Example</p>
+</div>
+
+<!-- ===== Notices ===== -->
+<div class="notice-area" id="noticeArea"></div>
+
+<!-- ===== Auth Screen ===== -->
+<div id="authScreen" class="screen active">
+  <div class="auth-box">
+    <h2>ログイン</h2>
+    <div class="form-group">
+      <label for="castNameInput">キャスト名</label>
+      <input type="text" id="castNameInput" class="form-input" placeholder="例: さくら" autocomplete="off">
+    </div>
+    <button class="btn btn-primary" id="btnAuthNext">次へ</button>
+  </div>
+</div>
+
+<!-- ===== PIN Screen ===== -->
+<div id="pinScreen" class="screen">
+  <div class="auth-box">
+    <h2 id="pinTitle">PINを入力</h2>
+    <p id="pinDesc" style="font-size:0.82rem;color:var(--text2);margin-bottom:16px;text-align:center;"></p>
+    <div class="form-group">
+      <label for="pinInput">4桁のPIN</label>
+      <input type="tel" id="pinInput" class="form-input pin-input" maxlength="4" placeholder="0000" inputmode="numeric" pattern="[0-9]*">
+    </div>
+    <div class="form-group" id="pinConfirmGroup" style="display:none;">
+      <label for="pinConfirmInput">PIN（確認用）</label>
+      <input type="tel" id="pinConfirmInput" class="form-input pin-input" maxlength="4" placeholder="0000" inputmode="numeric" pattern="[0-9]*">
+    </div>
+    <button class="btn btn-primary" id="btnPinSubmit">確認</button>
+    <button class="btn btn-secondary" id="btnPinBack" style="margin-top:10px;">戻る</button>
+  </div>
+</div>
+
+<!-- ===== Main Screen ===== -->
+<div id="mainScreen" class="screen">
+  <div class="container">
+
+    <!-- Status Badge -->
+    <div id="statusBadge" class="status-badge" style="display:none;"></div>
+
+    <!-- Deadline Banner -->
+    <div id="deadlineBanner" class="deadline-banner" style="display:none;"></div>
+
+    <!-- Week Selector -->
+    <div class="week-selector">
+      <label for="weekSelect">対象週</label>
+      <select id="weekSelect"></select>
+    </div>
+
+    <!-- Summary Toggle -->
+    <div class="summary-toggle" id="summaryToggle" style="display:none;">
+      <button id="btnToggleSummary">サマリー表示</button>
+    </div>
+
+    <!-- Summary Table -->
+    <div id="summaryView" style="display:none;">
+      <table class="summary-table">
+        <thead>
+          <tr><th>曜日</th><th>状態</th><th>時間</th><th>備考</th></tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Day Cards -->
+    <div class="day-cards" id="dayCards"></div>
+
+    <!-- Bulk Buttons -->
+    <div class="bulk-area" id="bulkArea">
+      <button class="btn btn-secondary" id="btnBulkOff">全日休み</button>
+      <button class="btn btn-secondary" id="btnBulkPending">全日保留</button>
+    </div>
+
+    <!-- Week Note -->
+    <div class="week-note-area">
+      <label for="weekNote">週全体備考</label>
+      <textarea id="weekNote" placeholder="週全体に関するメモがあれば記入"></textarea>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-area">
+      <button class="btn btn-primary" id="btnSubmit">提出する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Confirmation Modal ===== -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3>提出内容の確認</h3>
+    <ul class="confirm-list" id="confirmList"></ul>
+    <div id="confirmWeekNote" style="font-size:0.82rem;color:var(--text2);margin-top:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="btnConfirmCancel">戻る</button>
+      <button class="btn btn-primary" id="btnConfirmOK">提出</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Unfilled Days Modal ===== -->
+<div class="modal-overlay" id="unfilledModal">
+  <div class="modal">
+    <h3>未入力の日があります</h3>
+    <p id="unfilledDaysText"></p>
+    <p>未入力の日をどうしますか？</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px;">
+      <button class="btn btn-secondary" id="btnUnfilledOff">「休み」にする</button>
+      <button class="btn btn-secondary" id="btnUnfilledPending">「保留」にする</button>
+      <button class="btn btn-secondary" id="btnUnfilledAsIs">そのまま提出</button>
+      <button class="btn btn-danger btn-sm" id="btnUnfilledCancel" style="width:100%;">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Bulk Reason Modal ===== -->
+<div class="modal-overlay" id="bulkReasonModal">
+  <div class="modal">
+    <h3 id="bulkReasonTitle">理由を入力</h3>
+    <div class="form-group">
+      <label for="bulkReasonInput">理由（必須）</label>
+      <input type="text" id="bulkReasonInput" class="form-input" placeholder="例: 旅行のため">
+    </div>
+    <div id="bulkOverwriteWarn" style="display:none;color:var(--warning);font-size:0.8rem;margin-bottom:12px;">
+      ※ 入力済みの日も上書きされます
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="btnBulkReasonCancel">キャンセル</button>
+      <button class="btn btn-primary" id="btnBulkReasonOK">適用</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Download Modal ===== -->
+<div class="modal-overlay" id="downloadModal">
+  <div class="modal" style="text-align:center;">
+    <h3 style="color:var(--success);">提出完了</h3>
+    <p>シフト希望を送信しました。</p>
+    <div class="modal-actions" style="flex-direction:column;">
+      <button class="btn btn-secondary" id="btnDownload">入力内容をダウンロード</button>
+      <button class="btn btn-primary" id="btnDownloadClose">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Firebase SDK (compat) ===== -->
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database-compat.js"></script>
+
+<script>
+/* ==========================================================
+ *  シフト管理システム — キャスト画面
+ * ========================================================== */
+(function () {
+  'use strict';
+
+  /* ---------- Theme Application ---------- */
+  const S = STORE_CONFIG;
+  const root = document.documentElement;
+  root.style.setProperty('--accent', S.accentColor);
+  root.style.setProperty('--accent-light', S.accentColorLight);
+  root.style.setProperty('--accent-dark', S.accentColorDark);
+  root.style.setProperty('--bg1', S.bgPrimary);
+  root.style.setProperty('--bg2', S.bgSecondary);
+  root.style.setProperty('--bg-card', S.bgCard);
+  root.style.setProperty('--text1', S.textPrimary);
+  root.style.setProperty('--text2', S.textSecondary);
+  root.style.setProperty('--border', S.borderColor);
+  root.style.setProperty('--success', S.successColor);
+  root.style.setProperty('--warning', S.warningColor);
+  root.style.setProperty('--danger', S.dangerColor);
+  root.style.setProperty('--font', S.fontFamily);
+
+  document.getElementById('headerTitle').textContent = 'シフト希望提出';
+  document.getElementById('headerSub').textContent = S.storeName;
+  if (S.logoUrl) {
+    const img = document.createElement('img');
+    img.src = S.logoUrl; img.alt = S.storeName; img.className = 'logo';
+    document.getElementById('appHeader').prepend(img);
+  }
+
+  /* ---------- Firebase ---------- */
+  firebase.initializeApp(FIREBASE_CONFIG);
+  const db = firebase.database();
+  const storeId = S.storeId;
+
+  /* ---------- State ---------- */
+  let currentCastName = '';
+  let currentPinHash = '';
+  let isNewCast = false;
+  let storeSettings = { weekStartDay: 1, deadlineDay: 3, deadlineHour: 25 };
+  let currentWeekMonday = null;
+  let currentShiftData = null;
+  let summaryVisible = false;
+
+  /* ---------- DOM refs ---------- */
+  const $ = id => document.getElementById(id);
+  const authScreen = $('authScreen');
+  const pinScreen  = $('pinScreen');
+  const mainScreen = $('mainScreen');
+  const castNameInput = $('castNameInput');
+
+  /* ===== Utility: SHA-256 via Web Crypto API ===== */
+  async function hashPIN(pin) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(storeId + ':' + currentCastName + ':' + pin);
+    const buf = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  /* ===== Utility: Date / Week ===== */
+  const DAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
+  const STATUS_LABELS = { available: '出勤可', off: '休み', pending: '保留' };
+
+  function toDateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + dd;
+  }
+
+  function parseDate(s) {
+    const p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]);
+  }
+
+  function getWeekMonday(date) {
+    const d = new Date(date);
+    d.setHours(0,0,0,0);
+    const day = d.getDay();
+    const diff = (day === 0 ? -6 : 1 - day);
+    d.setDate(d.getDate() + diff);
+    return d;
+  }
+
+  function getWeekDates(monday) {
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      dates.push(d);
+    }
+    return dates;
+  }
+
+  function formatDateShort(d) {
+    return (d.getMonth() + 1) + '/' + d.getDate() + '(' + DAY_NAMES[d.getDay()] + ')';
+  }
+
+  /* Deadline calculation based on store settings */
+  function getDeadlineInfo(weekMonday) {
+    const m = new Date(weekMonday);
+    /* 前々週の deadlineDay */
+    const dDay = storeSettings.deadlineDay; /* 1=Mon..7=Sun */
+    const dHour = storeSettings.deadlineHour; /* e.g. 25 */
+
+    /* 前々週月曜 = weekMonday - 14 days */
+    const prevPrevMon = new Date(m); prevPrevMon.setDate(m.getDate() - 14);
+    /* deadline date = 前々週月曜 + (dDay - 1) */
+    const deadlineDate = new Date(prevPrevMon); deadlineDate.setDate(prevPrevMon.getDate() + dDay - 1);
+    /* deadline datetime */
+    const deadlineDt = new Date(deadlineDate);
+    if (dHour >= 24) {
+      deadlineDt.setDate(deadlineDt.getDate() + 1);
+      deadlineDt.setHours(dHour - 24, 0, 0, 0);
+    } else {
+      deadlineDt.setHours(dHour, 0, 0, 0);
+    }
+
+    /* 遅延受付終了: 前週土曜 23:59 = weekMonday - 2日 23:59 */
+    const lateEnd = new Date(m); lateEnd.setDate(m.getDate() - 2); lateEnd.setHours(23, 59, 59, 999);
+
+    /* 自動ロック: 前週日曜 0:00 = weekMonday - 1日 0:00 */
+    const lockDate = new Date(m); lockDate.setDate(m.getDate() - 1); lockDate.setHours(0, 0, 0, 0);
+
+    return { deadline: deadlineDt, lateEnd, lockDate };
+  }
+
+  function getWeekStatus(weekMonday) {
+    const now = new Date();
+    const info = getDeadlineInfo(weekMonday);
+    if (now < info.deadline) return 'open';
+    if (now < info.lateEnd) return 'late';
+    return 'closed';
+  }
+
+  function generateWeekOptions() {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const currentMon = getWeekMonday(today);
+    const opts = [];
+    /* 直前週 */
+    const prevMon = new Date(currentMon); prevMon.setDate(currentMon.getDate() - 7);
+    opts.push(prevMon);
+    /* 今週 〜 8週先 */
+    for (let i = 0; i <= 8; i++) {
+      const m = new Date(currentMon); m.setDate(currentMon.getDate() + i * 7);
+      opts.push(m);
+    }
+    return opts;
+  }
+
+  /* ===== Utility: Toast ===== */
+  let toastTimer = null;
+  function showToast(msg, type) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function showLoading(v) { $('loadingOverlay').classList.toggle('show', v); }
+
+  /* ===== Screen Management ===== */
+  function showScreen(name) {
+    [authScreen, pinScreen, mainScreen].forEach(s => s.classList.remove('active'));
+    if (name === 'auth') authScreen.classList.add('active');
+    else if (name === 'pin') pinScreen.classList.add('active');
+    else if (name === 'main') mainScreen.classList.add('active');
+  }
+
+  /* ===== Firebase Operations ===== */
+  async function loadSettings() {
+    try {
+      const snap = await db.ref('stores/' + storeId + '/settings').once('value');
+      if (snap.exists()) Object.assign(storeSettings, snap.val());
+    } catch (_) { /* use defaults */ }
+  }
+
+  async function loadNotices() {
+    try {
+      const snap = await db.ref('notices/' + storeId).once('value');
+      renderNotices(snap.val());
+    } catch (_) { /* ignore */ }
+  }
+
+  async function checkCastExists(name) {
+    const snap = await db.ref('casts/' + storeId + '/' + name).once('value');
+    return snap.exists() ? snap.val() : null;
+  }
+
+  async function registerCast(name, pinHash) {
+    await db.ref('casts/' + storeId + '/' + name).set({
+      pinHash: pinHash,
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  async function loadShiftData(weekStart, castName) {
+    const snap = await db.ref('shifts/' + storeId + '/' + weekStart + '/' + castName).once('value');
+    return snap.exists() ? snap.val() : null;
+  }
+
+  async function saveShiftData(weekStart, castName, data) {
+    await db.ref('shifts/' + storeId + '/' + weekStart + '/' + castName).set(data);
+  }
+
+  /* ===== Render: Notices ===== */
+  function renderNotices(data) {
+    const area = $('noticeArea');
+    area.innerHTML = '';
+    if (!data) return;
+    const dismissed = JSON.parse(localStorage.getItem('dismissed_notices_' + storeId) || '[]');
+    const entries = Object.entries(data)
+      .filter(([id]) => !dismissed.includes(id))
+      .map(([id, v]) => ({ id, ...v }))
+      .sort((a, b) => {
+        if (a.priority === 'urgent' && b.priority !== 'urgent') return -1;
+        if (b.priority === 'urgent' && a.priority !== 'urgent') return 1;
+        return (b.createdAt || '').localeCompare(a.createdAt || '');
+      });
+
+    entries.forEach(n => {
+      const div = document.createElement('div');
+      div.className = 'notice-item ' + (n.priority === 'urgent' ? 'urgent' : 'normal');
+      div.innerHTML =
+        '<div class="notice-label">' + (n.priority === 'urgent' ? '緊急' : 'お知らせ') + '</div>' +
+        '<div>' + escapeHtml(n.body) + '</div>' +
+        '<button class="notice-dismiss" data-id="' + n.id + '">&times;</button>';
+      area.appendChild(div);
+    });
+
+    area.querySelectorAll('.notice-dismiss').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const id = this.dataset.id;
+        dismissed.push(id);
+        localStorage.setItem('dismissed_notices_' + storeId, JSON.stringify(dismissed));
+        this.parentElement.remove();
+      });
+    });
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+  }
+
+  /* ===== Render: Week Selector ===== */
+  function renderWeekSelector(defaultMonday) {
+    const sel = $('weekSelect');
+    sel.innerHTML = '';
+    const opts = generateWeekOptions();
+    opts.forEach(mon => {
+      const dates = getWeekDates(mon);
+      const label = formatDateShort(dates[0]) + ' 〜 ' + formatDateShort(dates[6]);
+      const opt = document.createElement('option');
+      opt.value = toDateStr(mon);
+      opt.textContent = label;
+      sel.appendChild(opt);
+    });
+    if (defaultMonday) sel.value = toDateStr(defaultMonday);
+  }
+
+  /* ===== Render: Status Badge ===== */
+  function renderStatusBadge(data) {
+    const badge = $('statusBadge');
+    if (!data) { badge.style.display = 'none'; return; }
+    badge.style.display = 'flex';
+    if (data.isLocked) {
+      badge.className = 'status-badge locked';
+      badge.innerHTML = '<span class="badge-icon">&#x1F512;</span> 確定済み（変更不可）';
+    } else {
+      badge.className = 'status-badge submitted';
+      badge.innerHTML = '<span class="badge-icon">&#x2705;</span> 提出済み（再編集可能）';
+    }
+  }
+
+  /* ===== Render: Deadline Banner ===== */
+  function renderDeadlineBanner(weekMonday) {
+    const banner = $('deadlineBanner');
+    const status = getWeekStatus(weekMonday);
+    const info = getDeadlineInfo(weekMonday);
+    banner.style.display = 'block';
+
+    if (status === 'open') {
+      const dl = info.deadline;
+      const dlStr = (dl.getMonth()+1) + '/' + dl.getDate() + '(' + DAY_NAMES[dl.getDay()] + ')';
+      const dlHour = storeSettings.deadlineHour;
+      const hourStr = dlHour >= 24 ? (dlHour - 24) + ':00' : dlHour + ':00';
+      /* 25:00表記用: 締切日の前日表記 */
+      let displayStr;
+      if (dlHour >= 24) {
+        const dispDate = new Date(dl); dispDate.setDate(dl.getDate() - 1);
+        displayStr = (dispDate.getMonth()+1) + '/' + dispDate.getDate() + '(' + DAY_NAMES[dispDate.getDay()] + ') ' + dlHour + ':00';
+      } else {
+        displayStr = dlStr + ' ' + dlHour + ':00';
+      }
+      banner.className = 'deadline-banner open';
+      banner.textContent = '受付中 ｜ 締切: ' + displayStr;
+    } else if (status === 'late') {
+      banner.className = 'deadline-banner late';
+      banner.textContent = '締切済み ｜ 遅延提出受付中（' + formatDateShort(info.lateEnd) + ' まで）';
+    } else {
+      banner.className = 'deadline-banner closed';
+      banner.textContent = '受付終了 ｜ この週のシフト提出は締め切られました';
+    }
+  }
+
+  /* ===== Render: Summary Table ===== */
+  function renderSummary(data, weekMonday) {
+    const tbody = $('summaryBody');
+    tbody.innerHTML = '';
+    if (!data || !data.days) return;
+    const dates = getWeekDates(weekMonday);
+    dates.forEach(d => {
+      const key = toDateStr(d);
+      const day = data.days[key] || {};
+      const st = day.status;
+      const tr = document.createElement('tr');
+
+      let statusHtml, timeHtml;
+      if (st === 'available') {
+        statusHtml = '<span class="status-available">出勤可</span>';
+        timeHtml = (day.startTime || '-') + ' 〜 ' + (day.endTime || '-');
+      } else if (st === 'off') {
+        statusHtml = '<span class="status-off">休み</span>';
+        timeHtml = '-';
+      } else if (st === 'pending') {
+        statusHtml = '<span class="status-pending">保留</span>';
+        timeHtml = '-';
+      } else {
+        statusHtml = '<span class="status-null">未入力</span>';
+        timeHtml = '-';
+      }
+
+      tr.innerHTML =
+        '<td>' + formatDateShort(d) + '</td>' +
+        '<td>' + statusHtml + '</td>' +
+        '<td>' + timeHtml + '</td>' +
+        '<td style="color:var(--text2);font-size:0.75rem;">' + escapeHtml(day.note || '') + '</td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  /* ===== Render: Day Cards ===== */
+  function renderDayCards(weekMonday, existingData, isLocked) {
+    const container = $('dayCards');
+    container.innerHTML = '';
+    const dates = getWeekDates(weekMonday);
+    const days = (existingData && existingData.days) || {};
+    const weekStatus = getWeekStatus(weekMonday);
+    const effectiveLocked = isLocked || weekStatus === 'closed';
+
+    dates.forEach((d, idx) => {
+      const key = toDateStr(d);
+      const dayData = days[key] || {};
+      const st = dayData.status || null;
+
+      const card = document.createElement('div');
+      card.className = 'day-card' + (st ? ' status-' + st : '') + (effectiveLocked ? ' locked' : '');
+      card.dataset.date = key;
+
+      card.innerHTML =
+        '<div class="day-header">' +
+          '<span class="day-label">' + DAY_NAMES[d.getDay()] + '曜日</span>' +
+          '<span class="day-date">' + formatDateShort(d) + '</span>' +
+        '</div>' +
+        /* Status radio */
+        '<div class="status-group">' +
+          makeRadio(key, 'available', '出勤可', st) +
+          makeRadio(key, 'off', '休み', st) +
+          makeRadio(key, 'pending', '保留', st) +
+        '</div>' +
+        /* Time row */
+        '<div class="time-row" id="timeRow_' + key + '" style="' + (st !== 'available' ? 'display:none;' : '') + '">' +
+          '<label>開始</label>' +
+          '<select id="start_' + key + '"' + (effectiveLocked ? ' disabled' : '') + '>' + makeTimeOptions(12, 23, dayData.startTime) + '</select>' +
+          '<span class="time-sep">〜</span>' +
+          '<label>終了</label>' +
+          '<select id="end_' + key + '"' + (effectiveLocked ? ' disabled' : '') + '>' + makeTimeOptions(13, 25, dayData.endTime) + '</select>' +
+        '</div>' +
+        /* Day note */
+        '<textarea class="day-note-input" id="note_' + key + '" placeholder="日別備考" rows="1"' +
+          (effectiveLocked ? ' disabled' : '') + '>' + escapeHtml(dayData.note || '') + '</textarea>';
+
+      container.appendChild(card);
+    });
+
+    /* Attach status-radio change listeners */
+    container.querySelectorAll('input[type=radio]').forEach(r => {
+      r.addEventListener('change', function () {
+        const dateKey = this.name.replace('status_', '');
+        const card = container.querySelector('[data-date="' + dateKey + '"]');
+        card.className = 'day-card' + (this.value ? ' status-' + this.value : '') + (effectiveLocked ? ' locked' : '');
+        const timeRow = $('timeRow_' + dateKey);
+        timeRow.style.display = this.value === 'available' ? '' : 'none';
+      });
+    });
+
+    /* Disable form elements if locked */
+    if (effectiveLocked) {
+      container.querySelectorAll('input, select, textarea').forEach(el => { el.disabled = true; });
+      $('bulkArea').style.display = 'none';
+      $('btnSubmit').disabled = true;
+      $('weekNote').disabled = true;
+    } else {
+      $('bulkArea').style.display = 'flex';
+      $('btnSubmit').disabled = false;
+      $('weekNote').disabled = false;
+    }
+  }
+
+  function makeRadio(dateKey, value, label, currentStatus) {
+    const id = 'st_' + dateKey + '_' + value;
+    const checked = currentStatus === value ? ' checked' : '';
+    const lblClass = value === 'available' ? 'lbl-available' : value === 'off' ? 'lbl-off' : 'lbl-pending';
+    return '<div class="status-radio">' +
+      '<input type="radio" id="' + id + '" name="status_' + dateKey + '" value="' + value + '"' + checked + '>' +
+      '<label for="' + id + '" class="' + lblClass + '">' + label + '</label>' +
+    '</div>';
+  }
+
+  function makeTimeOptions(startH, endH, selected) {
+    let html = '<option value="">--:--</option>';
+    for (let h = startH; h <= endH; h++) {
+      for (let m = 0; m < 60; m += 30) {
+        if (h === endH && m > 0) break;
+        const val = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+        const sel = val === selected ? ' selected' : '';
+        html += '<option value="' + val + '"' + sel + '>' + val + '</option>';
+      }
+    }
+    return html;
+  }
+
+  /* ===== Collect Form Data ===== */
+  function collectFormData() {
+    const dates = getWeekDates(currentWeekMonday);
+    const days = {};
+    dates.forEach(d => {
+      const key = toDateStr(d);
+      const radios = document.querySelectorAll('input[name="status_' + key + '"]');
+      let st = null;
+      radios.forEach(r => { if (r.checked) st = r.value; });
+      const entry = { status: st };
+      if (st === 'available') {
+        entry.startTime = $('start_' + key).value || null;
+        entry.endTime = $('end_' + key).value || null;
+      }
+      const note = $('note_' + key).value.trim();
+      if (note) entry.note = note;
+      days[key] = entry;
+    });
+    return {
+      castName: currentCastName,
+      pinHash: currentPinHash,
+      weekStart: toDateStr(currentWeekMonday),
+      submittedAt: new Date().toISOString(),
+      isLocked: (currentShiftData && currentShiftData.isLocked) || false,
+      isLate: getWeekStatus(currentWeekMonday) === 'late',
+      weekNote: $('weekNote').value.trim() || null,
+      days: days
+    };
+  }
+
+  /* ===== Load Week Data ===== */
+  async function loadWeek(weekMonday) {
+    currentWeekMonday = weekMonday;
+    showLoading(true);
+    try {
+      const data = await loadShiftData(toDateStr(weekMonday), currentCastName);
+      currentShiftData = data;
+      const isLocked = data && data.isLocked;
+
+      renderStatusBadge(data);
+      renderDeadlineBanner(weekMonday);
+      renderDayCards(weekMonday, data, isLocked);
+
+      /* Week note */
+      $('weekNote').value = (data && data.weekNote) || '';
+
+      /* Summary */
+      if (data) {
+        $('summaryToggle').style.display = 'flex';
+        renderSummary(data, weekMonday);
+        if (summaryVisible) $('summaryView').style.display = '';
+      } else {
+        $('summaryToggle').style.display = 'none';
+        $('summaryView').style.display = 'none';
+      }
+    } catch (e) {
+      showToast('データ読み込みエラー', 'error');
+    }
+    showLoading(false);
+  }
+
+  /* ===== Generate Download Text ===== */
+  function generateDownloadText(data) {
+    let txt = 'シフト提出内容\n';
+    txt += 'キャスト名: ' + data.castName + '\n';
+    txt += '対象週: ' + data.weekStart + '\n';
+    txt += '提出日時: ' + data.submittedAt + '\n\n';
+    const dates = getWeekDates(parseDate(data.weekStart));
+    dates.forEach(d => {
+      const key = toDateStr(d);
+      const day = data.days[key] || {};
+      txt += formatDateShort(d) + ' : ';
+      if (day.status === 'available') {
+        txt += '出勤可 ' + (day.startTime || '') + '〜' + (day.endTime || '');
+      } else if (day.status === 'off') {
+        txt += '休み';
+      } else if (day.status === 'pending') {
+        txt += '保留';
+      } else {
+        txt += '未入力';
+      }
+      if (day.note) txt += ' (' + day.note + ')';
+      txt += '\n';
+    });
+    if (data.weekNote) txt += '\n週全体備考: ' + data.weekNote;
+    return txt;
+  }
+
+  /* ===== Event: Auth Next ===== */
+  $('btnAuthNext').addEventListener('click', async function () {
+    const name = castNameInput.value.trim();
+    if (!name) { showToast('キャスト名を入力してください', 'error'); return; }
+    currentCastName = name;
+    showLoading(true);
+    try {
+      const castData = await checkCastExists(name);
+      if (castData) {
+        /* Existing cast — verify PIN */
+        isNewCast = false;
+        $('pinTitle').textContent = 'PINを入力';
+        $('pinDesc').textContent = '登録済みのPINを入力してください';
+        $('pinConfirmGroup').style.display = 'none';
+      } else {
+        /* New cast — create PIN */
+        isNewCast = true;
+        $('pinTitle').textContent = 'PINを設定';
+        $('pinDesc').textContent = '4桁の暗証番号を設定してください（今後ログイン時に使用します）';
+        $('pinConfirmGroup').style.display = '';
+      }
+      $('pinInput').value = '';
+      $('pinConfirmInput').value = '';
+      showScreen('pin');
+    } catch (e) {
+      showToast('通信エラーが発生しました', 'error');
+    }
+    showLoading(false);
+  });
+
+  /* ===== Event: PIN Submit ===== */
+  $('btnPinSubmit').addEventListener('click', async function () {
+    const pin = $('pinInput').value.trim();
+    if (!/^\d{4}$/.test(pin)) { showToast('4桁の数字を入力してください', 'error'); return; }
+
+    if (isNewCast) {
+      const confirm = $('pinConfirmInput').value.trim();
+      if (pin !== confirm) { showToast('PINが一致しません', 'error'); return; }
+      showLoading(true);
+      try {
+        const h = await hashPIN(pin);
+        await registerCast(currentCastName, h);
+        currentPinHash = h;
+        localStorage.setItem('castName_' + storeId, currentCastName);
+        showToast('登録完了', 'success');
+        await enterMainScreen();
+      } catch (e) {
+        showToast('登録に失敗しました', 'error');
+      }
+      showLoading(false);
+    } else {
+      showLoading(true);
+      try {
+        const h = await hashPIN(pin);
+        const castData = await checkCastExists(currentCastName);
+        if (castData && castData.pinHash === h) {
+          currentPinHash = h;
+          localStorage.setItem('castName_' + storeId, currentCastName);
+          await enterMainScreen();
+        } else {
+          showToast('PINが正しくありません', 'error');
+        }
+      } catch (e) {
+        showToast('通信エラーが発生しました', 'error');
+      }
+      showLoading(false);
+    }
+  });
+
+  $('btnPinBack').addEventListener('click', function () { showScreen('auth'); });
+
+  /* ===== Enter Main Screen ===== */
+  async function enterMainScreen() {
+    showScreen('main');
+    const today = new Date();
+    const defaultMon = getWeekMonday(today);
+    renderWeekSelector(defaultMon);
+
+    /* Find nearest unsubmitted week or default to current */
+    const opts = generateWeekOptions();
+    let targetMon = defaultMon;
+    for (const mon of opts) {
+      const ws = getWeekStatus(mon);
+      if (ws === 'closed') continue;
+      const data = await loadShiftData(toDateStr(mon), currentCastName);
+      if (!data) { targetMon = mon; break; }
+    }
+    $('weekSelect').value = toDateStr(targetMon);
+    await loadWeek(targetMon);
+  }
+
+  /* ===== Event: Week Change ===== */
+  $('weekSelect').addEventListener('change', async function () {
+    const mon = parseDate(this.value);
+    summaryVisible = false;
+    $('btnToggleSummary').classList.remove('active');
+    $('summaryView').style.display = 'none';
+    await loadWeek(mon);
+  });
+
+  /* ===== Event: Summary Toggle ===== */
+  $('btnToggleSummary').addEventListener('click', function () {
+    summaryVisible = !summaryVisible;
+    this.classList.toggle('active', summaryVisible);
+    $('summaryView').style.display = summaryVisible ? '' : 'none';
+  });
+
+  /* ===== Event: Bulk Off / Pending ===== */
+  let bulkAction = '';
+  $('btnBulkOff').addEventListener('click', function () {
+    bulkAction = 'off';
+    $('bulkReasonTitle').textContent = '全日休みの理由';
+    openBulkReasonModal();
+  });
+  $('btnBulkPending').addEventListener('click', function () {
+    bulkAction = 'pending';
+    $('bulkReasonTitle').textContent = '全日保留の理由';
+    openBulkReasonModal();
+  });
+
+  function openBulkReasonModal() {
+    $('bulkReasonInput').value = '';
+    /* Check if any day already has input */
+    const dates = getWeekDates(currentWeekMonday);
+    let hasInput = false;
+    dates.forEach(d => {
+      const key = toDateStr(d);
+      const radios = document.querySelectorAll('input[name="status_' + key + '"]');
+      radios.forEach(r => { if (r.checked) hasInput = true; });
+    });
+    $('bulkOverwriteWarn').style.display = hasInput ? '' : 'none';
+    $('bulkReasonModal').classList.add('show');
+  }
+
+  $('btnBulkReasonCancel').addEventListener('click', function () {
+    $('bulkReasonModal').classList.remove('show');
+  });
+
+  $('btnBulkReasonOK').addEventListener('click', function () {
+    const reason = $('bulkReasonInput').value.trim();
+    if (!reason) { showToast('理由を入力してください', 'error'); return; }
+    $('bulkReasonModal').classList.remove('show');
+
+    /* Apply bulk */
+    const dates = getWeekDates(currentWeekMonday);
+    dates.forEach(d => {
+      const key = toDateStr(d);
+      const radio = document.getElementById('st_' + key + '_' + bulkAction);
+      if (radio) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+
+    /* Insert reason into week note */
+    const existing = $('weekNote').value.trim();
+    const prefix = bulkAction === 'off' ? '【全日休み理由】' : '【全日保留理由】';
+    const newNote = prefix + reason;
+    $('weekNote').value = existing ? existing + '\n' + newNote : newNote;
+    showToast('一括設定しました', 'info');
+  });
+
+  /* ===== Event: Submit ===== */
+  $('btnSubmit').addEventListener('click', function () {
+    const data = collectFormData();
+    /* Check unfilled days */
+    const dates = getWeekDates(currentWeekMonday);
+    const unfilledDays = [];
+    dates.forEach(d => {
+      const key = toDateStr(d);
+      if (!data.days[key] || data.days[key].status === null) {
+        unfilledDays.push(formatDateShort(d));
+      }
+    });
+
+    if (unfilledDays.length > 0) {
+      $('unfilledDaysText').textContent = '未入力: ' + unfilledDays.join(', ');
+      $('unfilledModal').classList.add('show');
+      return;
+    }
+    showConfirmModal(data);
+  });
+
+  /* Unfilled modal handlers */
+  $('btnUnfilledOff').addEventListener('click', function () {
+    applyUnfilledStatus('off');
+    $('unfilledModal').classList.remove('show');
+    showConfirmModal(collectFormData());
+  });
+  $('btnUnfilledPending').addEventListener('click', function () {
+    applyUnfilledStatus('pending');
+    $('unfilledModal').classList.remove('show');
+    showConfirmModal(collectFormData());
+  });
+  $('btnUnfilledAsIs').addEventListener('click', function () {
+    $('unfilledModal').classList.remove('show');
+    showConfirmModal(collectFormData());
+  });
+  $('btnUnfilledCancel').addEventListener('click', function () {
+    $('unfilledModal').classList.remove('show');
+  });
+
+  function applyUnfilledStatus(status) {
+    const dates = getWeekDates(currentWeekMonday);
+    dates.forEach(d => {
+      const key = toDateStr(d);
+      const radios = document.querySelectorAll('input[name="status_' + key + '"]');
+      let hasChecked = false;
+      radios.forEach(r => { if (r.checked) hasChecked = true; });
+      if (!hasChecked) {
+        const radio = document.getElementById('st_' + key + '_' + status);
+        if (radio) {
+          radio.checked = true;
+          radio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    });
+  }
+
+  /* ===== Confirmation Modal ===== */
+  function showConfirmModal(data) {
+    const list = $('confirmList');
+    list.innerHTML = '';
+    const dates = getWeekDates(currentWeekMonday);
+    dates.forEach(d => {
+      const key = toDateStr(d);
+      const day = data.days[key] || {};
+      const li = document.createElement('li');
+      let statusText;
+      if (day.status === 'available') {
+        statusText = '<span style="color:var(--success)">出勤可 ' + (day.startTime || '') + '〜' + (day.endTime || '') + '</span>';
+      } else if (day.status === 'off') {
+        statusText = '<span style="color:var(--danger)">休み</span>';
+      } else if (day.status === 'pending') {
+        statusText = '<span style="color:var(--warning)">保留</span>';
+      } else {
+        statusText = '<span style="color:var(--text2)">未入力</span>';
+      }
+      li.innerHTML = '<span class="cl-day">' + formatDateShort(d) + '</span><span class="cl-status">' + statusText + '</span>';
+      list.appendChild(li);
+    });
+    const noteDiv = $('confirmWeekNote');
+    noteDiv.textContent = data.weekNote ? '備考: ' + data.weekNote : '';
+    $('confirmModal').classList.add('show');
+  }
+
+  $('btnConfirmCancel').addEventListener('click', function () {
+    $('confirmModal').classList.remove('show');
+  });
+
+  $('btnConfirmOK').addEventListener('click', async function () {
+    $('confirmModal').classList.remove('show');
+    showLoading(true);
+    try {
+      const data = collectFormData();
+      await saveShiftData(toDateStr(currentWeekMonday), currentCastName, data);
+      currentShiftData = data;
+      renderStatusBadge(data);
+      $('summaryToggle').style.display = 'flex';
+      renderSummary(data, currentWeekMonday);
+      showToast('提出しました', 'success');
+      /* Show download modal */
+      $('downloadModal').classList.add('show');
+    } catch (e) {
+      showToast('提出に失敗しました: ' + e.message, 'error');
+    }
+    showLoading(false);
+  });
+
+  /* ===== Download ===== */
+  $('btnDownload').addEventListener('click', function () {
+    if (!currentShiftData) return;
+    const text = generateDownloadText(currentShiftData);
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'shift_' + currentCastName + '_' + toDateStr(currentWeekMonday) + '.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  $('btnDownloadClose').addEventListener('click', function () {
+    $('downloadModal').classList.remove('show');
+  });
+
+  /* ===== Init ===== */
+  async function init() {
+    showLoading(true);
+    await loadSettings();
+    await loadNotices();
+
+    /* Restore cast name from localStorage */
+    const savedName = localStorage.getItem('castName_' + storeId);
+    if (savedName) castNameInput.value = savedName;
+
+    showLoading(false);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

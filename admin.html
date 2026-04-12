@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>シフト管理 - Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+/* ===== CSS Variables ===== */
+:root {
+  --accent: #c8a876;
+  --accent-light: #f5eedd;
+  --accent-dark: #8b7355;
+  --bg1: #0f0f1a;
+  --bg2: #1a1a2e;
+  --bg-card: #16213e;
+  --text1: #eaeaea;
+  --text2: #9a9ab0;
+  --border: #2a2a4a;
+  --success: #4caf50;
+  --warning: #ff9800;
+  --danger: #ef5350;
+  --font: 'Noto Sans JP', sans-serif;
+  --radius: 12px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  background: var(--bg1); color: var(--text1); font-family: var(--font);
+  min-height: 100dvh; padding: 0 0 80px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== Layout ===== */
+.container { max-width: 640px; margin: 0 auto; padding: 0 16px; }
+
+/* ===== Header ===== */
+.header {
+  text-align: center; padding: 24px 16px 16px;
+  background: linear-gradient(180deg, var(--bg2) 0%, var(--bg1) 100%);
+}
+.header h1 {
+  font-size: 1.2rem; font-weight: 700; letter-spacing: 0.06em;
+  background: linear-gradient(135deg, var(--accent), #e8d5b0);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.header .sub { font-size: 0.73rem; color: var(--text2); margin-top: 4px; }
+.header .logout-btn {
+  position: absolute; top: 16px; right: 16px;
+  background: none; border: 1px solid var(--border); color: var(--text2);
+  padding: 6px 12px; border-radius: 6px; font-size: 0.72rem; cursor: pointer;
+  font-family: var(--font);
+}
+
+/* ===== Tabs ===== */
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border); margin: 0 16px; position: sticky; top: 0;
+  background: var(--bg1); z-index: 10;
+}
+.tab-btn {
+  flex: 1; padding: 12px 8px; text-align: center; font-size: 0.8rem; font-weight: 600;
+  background: none; border: none; color: var(--text2); cursor: pointer;
+  border-bottom: 2px solid transparent; font-family: var(--font); transition: all 0.2s;
+}
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ===== Auth Screen ===== */
+.screen { display: none; }
+.screen.active { display: block; }
+.auth-box {
+  background: var(--bg2); border-radius: var(--radius); padding: 28px 20px;
+  margin: 40px 16px; border: 1px solid var(--border);
+}
+.auth-box h2 {
+  font-size: 1.05rem; font-weight: 700; margin-bottom: 16px; text-align: center; color: var(--accent);
+}
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 0.8rem; color: var(--text2); margin-bottom: 6px; font-weight: 500; }
+.form-input {
+  width: 100%; padding: 12px 14px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg1); color: var(--text1);
+  font-size: 1rem; font-family: var(--font); transition: border-color 0.2s;
+}
+.form-input:focus { outline: none; border-color: var(--accent); }
+
+/* ===== Buttons ===== */
+.btn {
+  display: block; width: 100%; padding: 14px; border-radius: 8px; border: none;
+  font-size: 0.95rem; font-weight: 700; font-family: var(--font);
+  cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: #1a1a2e;
+}
+.btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-secondary { background: var(--bg2); color: var(--text1); border: 1px solid var(--border); }
+.btn-danger { background: rgba(239,83,80,0.15); color: var(--danger); border: 1px solid rgba(239,83,80,0.3); }
+.btn-sm { padding: 8px 14px; font-size: 0.78rem; width: auto; display: inline-block; }
+.btn-xs { padding: 5px 10px; font-size: 0.72rem; width: auto; display: inline-block; border-radius: 6px; }
+
+/* ===== Week Selector ===== */
+.week-selector {
+  margin: 16px 0; display: flex; align-items: center; gap: 10px;
+}
+.week-selector label { font-size: 0.8rem; color: var(--text2); white-space: nowrap; }
+.week-selector select {
+  flex: 1; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg2); color: var(--text1);
+  font-size: 0.9rem; font-family: var(--font);
+}
+
+/* ===== Stats Bar ===== */
+.stats-bar {
+  display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap;
+}
+.stat-chip {
+  padding: 6px 12px; border-radius: 16px; font-size: 0.75rem; font-weight: 600;
+  background: var(--bg2); border: 1px solid var(--border);
+}
+.stat-chip .num { color: var(--accent); margin-right: 2px; }
+
+/* ===== Cast Cards ===== */
+.cast-list { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+.cast-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px;
+}
+.cast-card.late { border-left: 4px solid var(--warning); }
+.cast-card.locked-card { border-left: 4px solid var(--danger); opacity: 0.85; }
+.cast-card .cc-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+}
+.cast-card .cc-name { font-weight: 700; font-size: 0.95rem; }
+.cast-card .cc-badges { display: flex; gap: 6px; }
+.cc-badge {
+  padding: 2px 8px; border-radius: 10px; font-size: 0.68rem; font-weight: 700;
+}
+.cc-badge.badge-late { background: rgba(255,152,0,0.18); color: var(--warning); }
+.cc-badge.badge-locked { background: rgba(239,83,80,0.15); color: var(--danger); }
+.cast-card .cc-submitted {
+  font-size: 0.72rem; color: var(--text2); margin-bottom: 8px;
+}
+.cast-card .cc-days {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 10px;
+}
+.cc-day {
+  text-align: center; padding: 4px 2px; border-radius: 4px; font-size: 0.68rem;
+}
+.cc-day .dow { display: block; font-weight: 600; margin-bottom: 2px; color: var(--text2); }
+.cc-day.st-available { background: rgba(76,175,80,0.15); color: var(--success); }
+.cc-day.st-off { background: rgba(239,83,80,0.12); color: var(--danger); }
+.cc-day.st-pending { background: rgba(255,152,0,0.12); color: var(--warning); }
+.cc-day.st-null { background: var(--bg1); color: var(--text2); }
+.cc-day .time-info { font-size: 0.6rem; color: var(--text2); margin-top: 1px; }
+
+.cast-card .cc-note {
+  font-size: 0.78rem; color: var(--text2); padding: 6px 8px;
+  background: var(--bg1); border-radius: 6px; margin-bottom: 10px;
+}
+.cast-card .cc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ===== Notice Management ===== */
+.notice-form {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; margin: 16px 0;
+}
+.notice-form h3 { font-size: 0.9rem; margin-bottom: 12px; color: var(--accent); }
+.notice-form textarea {
+  width: 100%; min-height: 60px; padding: 10px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg1); color: var(--text1);
+  font-size: 0.85rem; font-family: var(--font); resize: vertical; margin-bottom: 10px;
+}
+.notice-form .priority-row {
+  display: flex; gap: 10px; align-items: center; margin-bottom: 12px;
+}
+.notice-form .priority-row label { font-size: 0.8rem; color: var(--text2); }
+.notice-form .priority-row select {
+  padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--bg1); color: var(--text1); font-size: 0.85rem; font-family: var(--font);
+}
+
+.notice-list { margin: 16px 0; }
+.notice-entry {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 12px; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; margin-bottom: 8px;
+}
+.notice-entry.is-urgent { border-left: 4px solid var(--danger); }
+.notice-entry .ne-body { flex: 1; font-size: 0.82rem; line-height: 1.4; }
+.notice-entry .ne-meta { font-size: 0.68rem; color: var(--text2); margin-top: 4px; }
+
+/* ===== Settings ===== */
+.settings-section {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; margin: 16px 0;
+}
+.settings-section h3 { font-size: 0.9rem; margin-bottom: 14px; color: var(--accent); }
+.settings-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-row label { font-size: 0.82rem; color: var(--text2); }
+.settings-row select, .settings-row input[type=number] {
+  padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--bg1); color: var(--text1); font-size: 0.85rem; font-family: var(--font);
+  width: 120px; text-align: center;
+}
+
+/* ===== Delete Section ===== */
+.danger-zone {
+  background: rgba(239,83,80,0.06); border: 1px solid rgba(239,83,80,0.2);
+  border-radius: var(--radius); padding: 16px; margin: 24px 0;
+}
+.danger-zone h3 { font-size: 0.9rem; margin-bottom: 12px; color: var(--danger); }
+
+/* ===== Modal ===== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px 20px; width: 100%; max-width: 420px; max-height: 85vh; overflow-y: auto;
+}
+.modal h3 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; color: var(--accent); }
+.modal p { font-size: 0.85rem; color: var(--text2); margin-bottom: 12px; line-height: 1.5; }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+.modal-actions .btn { flex: 1; }
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  padding: 12px 24px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+  z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 90%;
+}
+.toast.show { opacity: 1; }
+.toast.success { background: var(--success); color: #fff; }
+.toast.error { background: var(--danger); color: #fff; }
+.toast.info { background: var(--accent); color: #1a1a2e; }
+
+/* ===== Loading ===== */
+.spinner {
+  display: inline-block; width: 20px; height: 20px;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay {
+  position: fixed; inset: 0; background: rgba(15,15,26,0.8);
+  display: none; align-items: center; justify-content: center; z-index: 300;
+}
+.loading-overlay.show { display: flex; }
+
+/* ===== Empty State ===== */
+.empty-state {
+  text-align: center; padding: 40px 16px; color: var(--text2); font-size: 0.85rem;
+}
+
+/* ===== Cast Detail Modal ===== */
+.detail-table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+.detail-table th {
+  background: var(--bg-card); padding: 6px 8px; font-size: 0.72rem;
+  color: var(--text2); font-weight: 600; text-align: left;
+}
+.detail-table td {
+  padding: 6px 8px; font-size: 0.8rem; border-top: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+<!-- Loading -->
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="spinner" style="width:36px;height:36px;border-width:3px;"></div>
+</div>
+
+<!-- ===== Login Screen ===== -->
+<div id="loginScreen" class="screen active">
+  <div class="header">
+    <h1>シフト管理</h1>
+    <p class="sub" id="loginStoreName">Admin</p>
+  </div>
+  <div class="auth-box">
+    <h2>管理者ログイン</h2>
+    <div class="form-group">
+      <label for="adminPwInput">パスワード</label>
+      <input type="password" id="adminPwInput" class="form-input" placeholder="パスワードを入力">
+    </div>
+    <button class="btn btn-primary" id="btnAdminLogin">ログイン</button>
+  </div>
+</div>
+
+<!-- ===== Dashboard Screen ===== -->
+<div id="dashScreen" class="screen">
+  <div class="header" style="position:relative;">
+    <h1>シフト管理</h1>
+    <p class="sub" id="dashStoreName">Admin</p>
+    <button class="logout-btn" id="btnLogout">ログアウト</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="shifts">シフト一覧</button>
+    <button class="tab-btn" data-tab="notices">お知らせ</button>
+    <button class="tab-btn" data-tab="settings">設定</button>
+  </div>
+
+  <!-- ===== Tab: Shifts ===== -->
+  <div class="tab-panel active" id="panelShifts">
+    <div class="container">
+      <div class="week-selector">
+        <label for="adminWeekSelect">対象週</label>
+        <select id="adminWeekSelect"></select>
+      </div>
+      <div class="stats-bar" id="statsBar"></div>
+      <div class="cast-list" id="castList"></div>
+      <div style="display:flex;gap:10px;margin:20px 0;">
+        <button class="btn btn-secondary" id="btnCsvExport" style="flex:1;">CSV出力</button>
+      </div>
+      <!-- Danger Zone -->
+      <div class="danger-zone">
+        <h3>データ削除</h3>
+        <p style="font-size:0.78rem;color:var(--text2);margin-bottom:12px;">選択中の週のシフトデータを一括削除します。この操作は取り消せません。</p>
+        <button class="btn btn-danger btn-sm" id="btnDeleteWeek">この週のデータを全削除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Tab: Notices ===== -->
+  <div class="tab-panel" id="panelNotices">
+    <div class="container">
+      <div class="notice-form">
+        <h3>お知らせ投稿</h3>
+        <textarea id="noticeBodyInput" placeholder="お知らせ内容を入力"></textarea>
+        <div class="priority-row">
+          <label>重要度:</label>
+          <select id="noticePrioritySelect">
+            <option value="normal">通常</option>
+            <option value="urgent">緊急</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-sm" id="btnPostNotice" style="width:100%;">投稿</button>
+      </div>
+      <h3 style="font-size:0.85rem;color:var(--text2);margin:16px 0 8px;">投稿済みお知らせ</h3>
+      <div class="notice-list" id="noticeList"></div>
+    </div>
+  </div>
+
+  <!-- ===== Tab: Settings ===== -->
+  <div class="tab-panel" id="panelSettings">
+    <div class="container">
+      <div class="settings-section">
+        <h3>締切設定</h3>
+        <div class="settings-row">
+          <label>締切曜日</label>
+          <select id="settingDeadlineDay">
+            <option value="1">月曜</option>
+            <option value="2">火曜</option>
+            <option value="3">水曜</option>
+            <option value="4">木曜</option>
+            <option value="5">金曜</option>
+            <option value="6">土曜</option>
+            <option value="7">日曜</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <label>締切時刻</label>
+          <select id="settingDeadlineHour"></select>
+        </div>
+        <div class="settings-row">
+          <label>週の開始曜日</label>
+          <select id="settingWeekStart">
+            <option value="1">月曜</option>
+            <option value="0">日曜</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-sm" id="btnSaveSettings" style="width:100%;margin-top:14px;">設定を保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Cast Detail Modal ===== -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <h3 id="detailModalTitle">キャスト詳細</h3>
+    <table class="detail-table">
+      <thead><tr><th>曜日</th><th>状態</th><th>時間</th><th>備考</th></tr></thead>
+      <tbody id="detailBody"></tbody>
+    </table>
+    <div id="detailWeekNote" style="font-size:0.8rem;color:var(--text2);margin-top:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="btnDetailClose">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Confirm Modal ===== -->
+<div class="modal-overlay" id="confirmActionModal">
+  <div class="modal">
+    <h3 id="confirmActionTitle">確認</h3>
+    <p id="confirmActionText"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="btnConfirmNo">キャンセル</button>
+      <button class="btn btn-danger" id="btnConfirmYes">実行</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database-compat.js"></script>
+
+<script>
+/* ==========================================================
+ *  シフト管理システム — Admin画面
+ * ========================================================== */
+(function () {
+  'use strict';
+
+  /* ---------- Theme ---------- */
+  const S = STORE_CONFIG;
+  const root = document.documentElement;
+  root.style.setProperty('--accent', S.accentColor);
+  root.style.setProperty('--accent-light', S.accentColorLight);
+  root.style.setProperty('--accent-dark', S.accentColorDark);
+  root.style.setProperty('--bg1', S.bgPrimary);
+  root.style.setProperty('--bg2', S.bgSecondary);
+  root.style.setProperty('--bg-card', S.bgCard);
+  root.style.setProperty('--text1', S.textPrimary);
+  root.style.setProperty('--text2', S.textSecondary);
+  root.style.setProperty('--border', S.borderColor);
+  root.style.setProperty('--success', S.successColor);
+  root.style.setProperty('--warning', S.warningColor);
+  root.style.setProperty('--danger', S.dangerColor);
+  root.style.setProperty('--font', S.fontFamily);
+  document.getElementById('loginStoreName').textContent = S.storeName;
+  document.getElementById('dashStoreName').textContent = S.storeName;
+
+  /* ---------- Firebase ---------- */
+  firebase.initializeApp(FIREBASE_CONFIG);
+  const db = firebase.database();
+  const storeId = S.storeId;
+
+  /* ---------- State ---------- */
+  let storeSettings = { weekStartDay: 1, deadlineDay: 3, deadlineHour: 25 };
+  let adminPasswordHash = '';
+  let currentWeekData = {};
+
+  /* ---------- DOM ---------- */
+  const $ = id => document.getElementById(id);
+  const DAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
+
+  /* ===== Utility ===== */
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function toDateStr(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function parseDate(s) { const p = s.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
+  function getWeekMonday(date) {
+    const d = new Date(date); d.setHours(0,0,0,0);
+    const day = d.getDay(); d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+    return d;
+  }
+  function getWeekDates(mon) {
+    const a = [];
+    for (let i = 0; i < 7; i++) { const d = new Date(mon); d.setDate(mon.getDate()+i); a.push(d); }
+    return a;
+  }
+  function fmtShort(d) { return (d.getMonth()+1)+'/'+d.getDate()+'('+DAY_NAMES[d.getDay()]+')'; }
+
+  function getDeadlineInfo(weekMonday) {
+    const m = new Date(weekMonday);
+    const dDay = storeSettings.deadlineDay;
+    const dHour = storeSettings.deadlineHour;
+    const pp = new Date(m); pp.setDate(m.getDate()-14);
+    const dd = new Date(pp); dd.setDate(pp.getDate()+dDay-1);
+    const dt = new Date(dd);
+    if (dHour >= 24) { dt.setDate(dt.getDate()+1); dt.setHours(dHour-24,0,0,0); }
+    else { dt.setHours(dHour,0,0,0); }
+    return dt;
+  }
+
+  function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  let toastTimer;
+  function showToast(msg, type) {
+    const t = $('toast'); t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+  function showLoading(v) { $('loadingOverlay').classList.toggle('show', v); }
+  function showScreen(name) {
+    $('loginScreen').classList.toggle('active', name === 'login');
+    $('dashScreen').classList.toggle('active', name === 'dash');
+  }
+
+  /* ===== Week Options ===== */
+  function generateWeekOptions() {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const cur = getWeekMonday(today); const opts = [];
+    for (let i = -4; i <= 8; i++) {
+      const m = new Date(cur); m.setDate(cur.getDate() + i * 7); opts.push(m);
+    }
+    return opts;
+  }
+  function renderWeekSelector() {
+    const sel = $('adminWeekSelect'); sel.innerHTML = '';
+    generateWeekOptions().forEach(mon => {
+      const ds = getWeekDates(mon);
+      const o = document.createElement('option');
+      o.value = toDateStr(mon);
+      o.textContent = fmtShort(ds[0]) + ' 〜 ' + fmtShort(ds[6]);
+      sel.appendChild(o);
+    });
+    sel.value = toDateStr(getWeekMonday(new Date()));
+  }
+
+  /* ===== Firebase Ops ===== */
+  async function loadStoreData() {
+    const snap = await db.ref('stores/' + storeId).once('value');
+    if (snap.exists()) {
+      const data = snap.val();
+      if (data.settings) Object.assign(storeSettings, data.settings);
+      adminPasswordHash = data.adminPasswordHash || '';
+    }
+  }
+
+  async function loadWeekShifts(weekStart) {
+    const snap = await db.ref('shifts/' + storeId + '/' + weekStart).once('value');
+    return snap.exists() ? snap.val() : {};
+  }
+
+  async function loadNotices() {
+    const snap = await db.ref('notices/' + storeId).once('value');
+    return snap.exists() ? snap.val() : {};
+  }
+
+  /* ===== Admin Auth ===== */
+  $('btnAdminLogin').addEventListener('click', async function () {
+    const pw = $('adminPwInput').value.trim();
+    if (!pw) { showToast('パスワードを入力してください', 'error'); return; }
+    showLoading(true);
+    try {
+      await loadStoreData();
+      const hash = await sha256(pw);
+      if (hash === adminPasswordHash) {
+        localStorage.setItem('admin_auth_' + storeId, '1');
+        showScreen('dash');
+        await initDashboard();
+      } else {
+        showToast('パスワードが正しくありません', 'error');
+      }
+    } catch (e) {
+      showToast('通信エラー', 'error');
+    }
+    showLoading(false);
+  });
+
+  $('btnLogout').addEventListener('click', function () {
+    localStorage.removeItem('admin_auth_' + storeId);
+    showScreen('login');
+    $('adminPwInput').value = '';
+  });
+
+  /* ===== Tabs ===== */
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      this.classList.add('active');
+      $('panel' + capitalize(this.dataset.tab)).classList.add('active');
+    });
+  });
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  /* ===== Render: Cast List ===== */
+  function renderCastList(weekData, weekMonday) {
+    currentWeekData = weekData;
+    const list = $('castList');
+    list.innerHTML = '';
+    const entries = Object.entries(weekData);
+    if (entries.length === 0) {
+      list.innerHTML = '<div class="empty-state">この週の提出データはありません</div>';
+      $('statsBar').innerHTML = '';
+      return;
+    }
+
+    /* Stats */
+    let total = entries.length, lateCount = 0, lockedCount = 0;
+    entries.forEach(([, v]) => { if (v.isLate) lateCount++; if (v.isLocked) lockedCount++; });
+    $('statsBar').innerHTML =
+      '<div class="stat-chip"><span class="num">' + total + '</span>名提出</div>' +
+      (lateCount > 0 ? '<div class="stat-chip" style="border-color:var(--warning);"><span class="num" style="color:var(--warning);">' + lateCount + '</span>名遅延</div>' : '') +
+      '<div class="stat-chip"><span class="num">' + lockedCount + '</span>名確定</div>';
+
+    const deadline = getDeadlineInfo(weekMonday);
+    const dates = getWeekDates(weekMonday);
+
+    entries.sort((a, b) => (a[0] > b[0] ? 1 : -1)).forEach(([castName, data]) => {
+      const card = document.createElement('div');
+      const isLate = data.isLate || (data.submittedAt && new Date(data.submittedAt) > deadline);
+      card.className = 'cast-card' + (isLate ? ' late' : '') + (data.isLocked ? ' locked-card' : '');
+
+      /* Header */
+      let badges = '';
+      if (isLate) badges += '<span class="cc-badge badge-late">遅延</span>';
+      if (data.isLocked) badges += '<span class="cc-badge badge-locked">確定</span>';
+
+      /* Days grid */
+      let daysHtml = '';
+      dates.forEach(d => {
+        const key = toDateStr(d);
+        const day = (data.days && data.days[key]) || {};
+        const st = day.status || 'null';
+        const statusLabel = st === 'available' ? '出勤' : st === 'off' ? '休' : st === 'pending' ? '保留' : '-';
+        const timeInfo = st === 'available' && day.startTime ? day.startTime + '-' + (day.endTime||'') : '';
+        daysHtml += '<div class="cc-day st-' + st + '">' +
+          '<span class="dow">' + DAY_NAMES[d.getDay()] + '</span>' +
+          statusLabel +
+          (timeInfo ? '<div class="time-info">' + timeInfo + '</div>' : '') +
+          '</div>';
+      });
+
+      /* Submitted time */
+      const subTime = data.submittedAt ? new Date(data.submittedAt).toLocaleString('ja-JP') : '-';
+
+      card.innerHTML =
+        '<div class="cc-header">' +
+          '<span class="cc-name">' + escapeHtml(castName) + '</span>' +
+          '<div class="cc-badges">' + badges + '</div>' +
+        '</div>' +
+        '<div class="cc-submitted">提出: ' + subTime + '</div>' +
+        '<div class="cc-days">' + daysHtml + '</div>' +
+        (data.weekNote ? '<div class="cc-note">備考: ' + escapeHtml(data.weekNote) + '</div>' : '') +
+        '<div class="cc-actions">' +
+          '<button class="btn btn-secondary btn-xs" data-action="detail" data-cast="' + escapeHtml(castName) + '">詳細</button>' +
+          '<button class="btn btn-secondary btn-xs" data-action="lock" data-cast="' + escapeHtml(castName) + '">' +
+            (data.isLocked ? '解除' : 'ロック') + '</button>' +
+          '<button class="btn btn-danger btn-xs" data-action="delete" data-cast="' + escapeHtml(castName) + '">削除</button>' +
+        '</div>';
+
+      list.appendChild(card);
+    });
+
+    /* Button handlers via delegation */
+    list.onclick = function (e) {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const cast = btn.dataset.cast;
+      if (action === 'detail') showDetailModal(cast, weekMonday);
+      else if (action === 'lock') toggleLock(cast);
+      else if (action === 'delete') confirmDeleteCast(cast);
+    };
+  }
+
+  /* ===== Detail Modal ===== */
+  function showDetailModal(castName, weekMonday) {
+    const data = currentWeekData[castName];
+    if (!data) return;
+    $('detailModalTitle').textContent = castName + ' の詳細';
+    const tbody = $('detailBody'); tbody.innerHTML = '';
+    const dates = getWeekDates(weekMonday);
+    dates.forEach(d => {
+      const key = toDateStr(d);
+      const day = (data.days && data.days[key]) || {};
+      const st = day.status;
+      const tr = document.createElement('tr');
+      let statusHtml = '<span style="color:var(--text2)">未入力</span>';
+      if (st === 'available') statusHtml = '<span style="color:var(--success)">出勤可</span>';
+      else if (st === 'off') statusHtml = '<span style="color:var(--danger)">休み</span>';
+      else if (st === 'pending') statusHtml = '<span style="color:var(--warning)">保留</span>';
+      const time = st === 'available' ? (day.startTime||'-') + ' 〜 ' + (day.endTime||'-') : '-';
+      tr.innerHTML = '<td>' + fmtShort(d) + '</td><td>' + statusHtml + '</td><td>' + time + '</td><td style="font-size:0.75rem;color:var(--text2);">' + escapeHtml(day.note||'') + '</td>';
+      tbody.appendChild(tr);
+    });
+    $('detailWeekNote').textContent = data.weekNote ? '備考: ' + data.weekNote : '';
+    $('detailModal').classList.add('show');
+  }
+  $('btnDetailClose').addEventListener('click', () => $('detailModal').classList.remove('show'));
+
+  /* ===== Lock / Unlock ===== */
+  async function toggleLock(castName) {
+    const weekStart = $('adminWeekSelect').value;
+    const data = currentWeekData[castName];
+    if (!data) return;
+    const newLocked = !data.isLocked;
+    showLoading(true);
+    try {
+      const updatedData = Object.assign({}, data, { isLocked: newLocked });
+      await db.ref('shifts/' + storeId + '/' + weekStart + '/' + castName).set(updatedData);
+      showToast(castName + ' を' + (newLocked ? 'ロック' : 'ロック解除') + 'しました', 'success');
+      await refreshCastList();
+    } catch (e) {
+      showToast('操作に失敗しました: ' + e.message, 'error');
+    }
+    showLoading(false);
+  }
+
+  /* ===== Delete Cast ===== */
+  let pendingConfirmAction = null;
+  function confirmDeleteCast(castName) {
+    $('confirmActionTitle').textContent = 'データ削除';
+    $('confirmActionText').textContent = castName + ' のシフトデータを削除しますか？この操作は取り消せません。';
+    pendingConfirmAction = async () => {
+      showLoading(true);
+      try {
+        const weekStart = $('adminWeekSelect').value;
+        await db.ref('shifts/' + storeId + '/' + weekStart + '/' + castName).remove();
+        showToast(castName + ' を削除しました', 'success');
+        await refreshCastList();
+      } catch (e) {
+        showToast('削除に失敗しました', 'error');
+      }
+      showLoading(false);
+    };
+    $('confirmActionModal').classList.add('show');
+  }
+
+  /* ===== Delete Week ===== */
+  $('btnDeleteWeek').addEventListener('click', function () {
+    const weekStart = $('adminWeekSelect').value;
+    $('confirmActionTitle').textContent = '週データ一括削除';
+    $('confirmActionText').textContent = weekStart + ' 週のデータをすべて削除しますか？この操作は取り消せません。';
+    pendingConfirmAction = async () => {
+      showLoading(true);
+      try {
+        await db.ref('shifts/' + storeId + '/' + weekStart).remove();
+        showToast('週データを削除しました', 'success');
+        await refreshCastList();
+      } catch (e) {
+        showToast('削除に失敗しました', 'error');
+      }
+      showLoading(false);
+    };
+    $('confirmActionModal').classList.add('show');
+  });
+
+  $('btnConfirmYes').addEventListener('click', function () {
+    $('confirmActionModal').classList.remove('show');
+    if (pendingConfirmAction) { pendingConfirmAction(); pendingConfirmAction = null; }
+  });
+  $('btnConfirmNo').addEventListener('click', function () {
+    $('confirmActionModal').classList.remove('show');
+    pendingConfirmAction = null;
+  });
+
+  /* ===== CSV Export ===== */
+  $('btnCsvExport').addEventListener('click', function () {
+    const weekStart = $('adminWeekSelect').value;
+    const weekMon = parseDate(weekStart);
+    const dates = getWeekDates(weekMon);
+    const entries = Object.entries(currentWeekData);
+    if (entries.length === 0) { showToast('データがありません', 'error'); return; }
+
+    const BOM = '\uFEFF';
+    let csv = BOM + 'キャスト名,対象週,曜日,日付,出勤可否,開始時間,終了時間,日別備考,週全体備考,提出日時,ロック状態\n';
+    entries.sort((a,b) => a[0] > b[0] ? 1 : -1).forEach(([castName, data]) => {
+      dates.forEach(d => {
+        const key = toDateStr(d);
+        const day = (data.days && data.days[key]) || {};
+        const st = day.status === 'available' ? '出勤可' : day.status === 'off' ? '休み' : day.status === 'pending' ? '保留' : '未入力';
+        const row = [
+          castName, weekStart, DAY_NAMES[d.getDay()], key,
+          st, day.startTime || '', day.endTime || '', day.note || '',
+          data.weekNote || '', data.submittedAt || '', data.isLocked ? 'ロック済' : '未ロック'
+        ].map(v => '"' + String(v).replace(/"/g, '""') + '"');
+        csv += row.join(',') + '\n';
+      });
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'shift_' + weekStart + '.csv'; a.click();
+    URL.revokeObjectURL(url);
+    showToast('CSVをダウンロードしました', 'success');
+  });
+
+  /* ===== Week Change ===== */
+  $('adminWeekSelect').addEventListener('change', refreshCastList);
+  async function refreshCastList() {
+    const weekStart = $('adminWeekSelect').value;
+    const weekMon = parseDate(weekStart);
+    showLoading(true);
+    try {
+      const data = await loadWeekShifts(weekStart);
+      renderCastList(data, weekMon);
+    } catch (e) {
+      showToast('データ読み込みエラー', 'error');
+    }
+    showLoading(false);
+  }
+
+  /* ===== Notices Management ===== */
+  async function renderNotices() {
+    const data = await loadNotices();
+    const list = $('noticeList'); list.innerHTML = '';
+    const entries = Object.entries(data);
+    if (entries.length === 0) {
+      list.innerHTML = '<div class="empty-state">お知らせはありません</div>';
+      return;
+    }
+    entries.sort((a,b) => (b[1].createdAt||'').localeCompare(a[1].createdAt||'')).forEach(([id, n]) => {
+      const div = document.createElement('div');
+      div.className = 'notice-entry' + (n.priority === 'urgent' ? ' is-urgent' : '');
+      const dateStr = n.createdAt ? new Date(n.createdAt).toLocaleString('ja-JP') : '';
+      div.innerHTML =
+        '<div class="ne-body">' + escapeHtml(n.body) +
+          '<div class="ne-meta">' + (n.priority === 'urgent' ? '緊急 | ' : '') + dateStr + '</div>' +
+        '</div>' +
+        '<button class="btn btn-danger btn-xs" data-notice-id="' + id + '" style="margin-left:10px;">削除</button>';
+      list.appendChild(div);
+    });
+    list.onclick = async function (e) {
+      const btn = e.target.closest('[data-notice-id]');
+      if (!btn) return;
+      showLoading(true);
+      try {
+        await db.ref('notices/' + storeId + '/' + btn.dataset.noticeId).remove();
+        showToast('お知らせを削除しました', 'success');
+        await renderNotices();
+      } catch (er) { showToast('削除に失敗しました', 'error'); }
+      showLoading(false);
+    };
+  }
+
+  $('btnPostNotice').addEventListener('click', async function () {
+    const body = $('noticeBodyInput').value.trim();
+    if (!body) { showToast('内容を入力してください', 'error'); return; }
+    const priority = $('noticePrioritySelect').value;
+    showLoading(true);
+    try {
+      await db.ref('notices/' + storeId).push({
+        body: body,
+        priority: priority,
+        createdAt: new Date().toISOString()
+      });
+      $('noticeBodyInput').value = '';
+      showToast('お知らせを投稿しました', 'success');
+      await renderNotices();
+    } catch (e) { showToast('投稿に失敗しました', 'error'); }
+    showLoading(false);
+  });
+
+  /* ===== Settings ===== */
+  function renderSettings() {
+    $('settingDeadlineDay').value = storeSettings.deadlineDay;
+    $('settingWeekStart').value = storeSettings.weekStartDay;
+    /* Deadline hour options */
+    const hourSel = $('settingDeadlineHour');
+    hourSel.innerHTML = '';
+    for (let h = 0; h <= 29; h++) {
+      const o = document.createElement('option');
+      o.value = h; o.textContent = h + ':00';
+      hourSel.appendChild(o);
+    }
+    hourSel.value = storeSettings.deadlineHour;
+  }
+
+  $('btnSaveSettings').addEventListener('click', async function () {
+    const newSettings = {
+      weekStartDay: parseInt($('settingWeekStart').value, 10),
+      deadlineDay: parseInt($('settingDeadlineDay').value, 10),
+      deadlineHour: parseInt($('settingDeadlineHour').value, 10)
+    };
+    showLoading(true);
+    try {
+      await db.ref('stores/' + storeId + '/settings').set(newSettings);
+      Object.assign(storeSettings, newSettings);
+      showToast('設定を保存しました', 'success');
+    } catch (e) { showToast('保存に失敗しました', 'error'); }
+    showLoading(false);
+  });
+
+  /* ===== Init Dashboard ===== */
+  async function initDashboard() {
+    renderWeekSelector();
+    renderSettings();
+    await Promise.all([refreshCastList(), renderNotices()]);
+  }
+
+  /* ===== Init ===== */
+  async function init() {
+    showLoading(true);
+    try {
+      await loadStoreData();
+      /* Auto-login check */
+      if (localStorage.getItem('admin_auth_' + storeId) === '1') {
+        showScreen('dash');
+        await initDashboard();
+      }
+    } catch (_) { /* ignore */ }
+    showLoading(false);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+{
+  "rules": {
+
+    /* ======================================================
+     *  stores — 店舗基本情報・設定
+     *  読み取り: 全員可（設定値の取得に必要）
+     *  書き込み: settings のみ admin 画面から変更可
+     *            adminPasswordHash / name は Firebase Console 専用
+     * ====================================================== */
+    "stores": {
+      "$storeId": {
+        ".read": true,
+        "settings": {
+          ".write": true,
+          ".validate": "newData.hasChild('weekStartDay') && newData.hasChild('deadlineDay') && newData.hasChild('deadlineHour')"
+        }
+      }
+    },
+
+    /* ======================================================
+     *  casts — キャスト登録情報（名前＋PINハッシュ）
+     *  読み取り: 全員可（存在確認・PIN照合に使用）
+     *  書き込み: 新規登録（!data.exists）
+     *           または PINハッシュ一致時のみ更新可
+     * ====================================================== */
+    "casts": {
+      "$storeId": {
+        ".read": true,
+        "$castName": {
+          ".write": "!data.exists() || data.child('pinHash').val() === newData.child('pinHash').val()",
+          ".validate": "newData.hasChild('pinHash') && newData.hasChild('createdAt')"
+        }
+      }
+    },
+
+    /* ======================================================
+     *  notices — お知らせ
+     *  読み取り: 全員可
+     *  書き込み: 全員可（admin認証はクライアント側で実施）
+     * ====================================================== */
+    "notices": {
+      "$storeId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+
+    /* ======================================================
+     *  shifts — シフトデータ本体
+     *  読み取り: 週単位で全員可（admin一覧表示に必要）
+     *  書き込み:
+     *    1. 新規提出: casts に登録済み かつ PINハッシュ一致
+     *    2. 再提出:   既存データの PINハッシュと一致
+     *    3. 削除:     許可（admin のデータ削除用）
+     *  バリデーション:
+     *    削除以外は必須フィールドの存在を検証
+     * ====================================================== */
+    "shifts": {
+      "$storeId": {
+        "$weekStart": {
+          ".read": true,
+          "$castName": {
+            ".write": "(!data.exists() && root.child('casts').child($storeId).child($castName).exists() && newData.child('pinHash').val() === root.child('casts').child($storeId).child($castName).child('pinHash').val()) || (data.exists() && data.child('pinHash').val() === newData.child('pinHash').val()) || !newData.exists()",
+            ".validate": "!newData.exists() || (newData.hasChild('castName') && newData.hasChild('pinHash') && newData.hasChild('weekStart') && newData.hasChild('days'))"
+          }
+        }
+      }
+    }
+  }
+}
