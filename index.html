@@ -239,6 +239,14 @@ a { color: var(--accent); }
 }
 .time-row select:disabled { opacity: 0.3; }
 .time-row .time-sep { color: var(--text2); font-size: 0.85rem; }
+.min-toggle {
+  padding: 8px 12px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--bg1); color: var(--text1);
+  font-size: 0.85rem; font-family: var(--font); cursor: pointer;
+  min-width: 48px; text-align: center; transition: all 0.2s;
+}
+.min-toggle.active { background: var(--accent); color: #1a1a2e; border-color: var(--accent); }
+.min-toggle:disabled { opacity: 0.3; cursor: not-allowed; }
 
 /* Day note */
 .day-note-input {
@@ -469,7 +477,7 @@ a { color: var(--accent); }
     <h3 id="bulkReasonTitle">理由を入力</h3>
     <div class="form-group">
       <label for="bulkReasonInput">理由（必須）</label>
-      <input type="text" id="bulkReasonInput" class="form-input" placeholder="例: 旅行のため">
+      <input type="text" id="bulkReasonInput" class="form-input" placeholder="例: 昼職のシフトがまだ出ていないため">
     </div>
     <div id="bulkOverwriteWarn" style="display:none;color:var(--warning);font-size:0.8rem;margin-bottom:12px;">
       ※ 入力済みの日も上書きされます
@@ -599,14 +607,14 @@ a { color: var(--accent); }
   /* Deadline calculation based on store settings */
   function getDeadlineInfo(weekMonday) {
     const m = new Date(weekMonday);
-    /* 前々週の deadlineDay */
+    /* 前週の deadlineDay */
     const dDay = storeSettings.deadlineDay; /* 1=Mon..7=Sun */
     const dHour = storeSettings.deadlineHour; /* e.g. 25 */
 
-    /* 前々週月曜 = weekMonday - 14 days */
-    const prevPrevMon = new Date(m); prevPrevMon.setDate(m.getDate() - 14);
-    /* deadline date = 前々週月曜 + (dDay - 1) */
-    const deadlineDate = new Date(prevPrevMon); deadlineDate.setDate(prevPrevMon.getDate() + dDay - 1);
+    /* 前週月曜 = weekMonday - 7 days */
+    const prevMon = new Date(m); prevMon.setDate(m.getDate() - 7);
+    /* deadline date = 前週月曜 + (dDay - 1) */
+    const deadlineDate = new Date(prevMon); deadlineDate.setDate(prevMon.getDate() + dDay - 1);
     /* deadline datetime */
     const deadlineDt = new Date(deadlineDate);
     if (dHour >= 24) {
@@ -858,6 +866,11 @@ a { color: var(--accent); }
       card.className = 'day-card' + (st ? ' status-' + st : '') + (effectiveLocked ? ' locked' : '');
       card.dataset.date = key;
 
+      var _sT = dayData.startTime || '', _eT = dayData.endTime || '';
+      var _sH = _sT ? _sT.split(':')[0] : '', _sM = _sT ? _sT.split(':')[1] : '00';
+      var _eH = _eT ? _eT.split(':')[0] : '', _eM = _eT ? _eT.split(':')[1] : '00';
+      var _dis = effectiveLocked ? ' disabled' : '';
+
       card.innerHTML =
         '<div class="day-header">' +
           '<span class="day-label">' + DAY_NAMES[d.getDay()] + '曜日</span>' +
@@ -872,10 +885,12 @@ a { color: var(--accent); }
         /* Time row */
         '<div class="time-row" id="timeRow_' + key + '" style="' + (st !== 'available' ? 'display:none;' : '') + '">' +
           '<label>開始</label>' +
-          '<select id="start_' + key + '"' + (effectiveLocked ? ' disabled' : '') + '>' + makeTimeOptions(12, 23, dayData.startTime) + '</select>' +
+          '<select id="startH_' + key + '"' + _dis + '>' + makeHourOptions(12, 23, _sH) + '</select>' +
+          '<button type="button" class="min-toggle' + (_sM === '30' ? ' active' : '') + '" id="startM_' + key + '" data-min="' + _sM + '"' + _dis + '>:' + _sM + '</button>' +
           '<span class="time-sep">〜</span>' +
           '<label>終了</label>' +
-          '<select id="end_' + key + '"' + (effectiveLocked ? ' disabled' : '') + '>' + makeTimeOptions(13, 25, dayData.endTime) + '</select>' +
+          '<select id="endH_' + key + '"' + _dis + '>' + makeHourOptions(13, 25, _eH) + '</select>' +
+          '<button type="button" class="min-toggle' + (_eM === '30' ? ' active' : '') + '" id="endM_' + key + '" data-min="' + _eM + '"' + _dis + '>:' + _eM + '</button>' +
         '</div>' +
         /* Day note */
         '<textarea class="day-note-input" id="note_' + key + '" placeholder="日別備考" rows="1"' +
@@ -895,9 +910,21 @@ a { color: var(--accent); }
       });
     });
 
+    /* Attach min-toggle click listeners */
+    container.querySelectorAll('.min-toggle').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (this.disabled) return;
+        var cur = this.dataset.min;
+        var next = cur === '00' ? '30' : '00';
+        this.dataset.min = next;
+        this.textContent = ':' + next;
+        this.classList.toggle('active', next === '30');
+      });
+    });
+
     /* Disable form elements if locked */
     if (effectiveLocked) {
-      container.querySelectorAll('input, select, textarea').forEach(el => { el.disabled = true; });
+      container.querySelectorAll('input, select, textarea, .min-toggle').forEach(el => { el.disabled = true; });
       $('bulkArea').style.display = 'none';
       $('btnSubmit').disabled = true;
       $('weekNote').disabled = true;
@@ -918,15 +945,12 @@ a { color: var(--accent); }
     '</div>';
   }
 
-  function makeTimeOptions(startH, endH, selected) {
-    let html = '<option value="">--:--</option>';
+  function makeHourOptions(startH, endH, selected) {
+    let html = '<option value="">--</option>';
     for (let h = startH; h <= endH; h++) {
-      for (let m = 0; m < 60; m += 30) {
-        if (h === endH && m > 0) break;
-        const val = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-        const sel = val === selected ? ' selected' : '';
-        html += '<option value="' + val + '"' + sel + '>' + val + '</option>';
-      }
+      const val = String(h).padStart(2, '0');
+      const sel = val === selected ? ' selected' : '';
+      html += '<option value="' + val + '"' + sel + '>' + val + '</option>';
     }
     return html;
   }
@@ -942,8 +966,10 @@ a { color: var(--accent); }
       radios.forEach(r => { if (r.checked) st = r.value; });
       const entry = { status: st };
       if (st === 'available') {
-        entry.startTime = $('start_' + key).value || null;
-        entry.endTime = $('end_' + key).value || null;
+        var sh = $('startH_' + key).value, sm = $('startM_' + key).dataset.min;
+        entry.startTime = sh ? (sh + ':' + sm) : null;
+        var eh = $('endH_' + key).value, em = $('endM_' + key).dataset.min;
+        entry.endTime = eh ? (eh + ':' + em) : null;
       }
       const note = $('note_' + key).value.trim();
       if (note) entry.note = note;

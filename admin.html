@@ -485,7 +485,7 @@ body {
     const m = new Date(weekMonday);
     const dDay = storeSettings.deadlineDay;
     const dHour = storeSettings.deadlineHour;
-    const pp = new Date(m); pp.setDate(m.getDate()-14);
+    const pp = new Date(m); pp.setDate(m.getDate()-7);
     const dd = new Date(pp); dd.setDate(pp.getDate()+dDay-1);
     const dt = new Date(dd);
     if (dHour >= 24) { dt.setDate(dt.getDate()+1); dt.setHours(dHour-24,0,0,0); }
