@@ -339,6 +339,53 @@ a { color: var(--accent); }
   display: none; align-items: center; justify-content: center; z-index: 300;
 }
 .loading-overlay.show { display: flex; }
+
+/* ===== Confirmation Screen ===== */
+.confirmation-header {
+  text-align: center;
+  padding: 32px 16px 20px;
+}
+.confirmation-checkmark {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: rgba(76,175,80,0.15); border: 2px solid var(--success);
+  font-size: 2rem; line-height: 62px; margin: 0 auto 16px;
+  color: var(--success);
+}
+.confirmation-header h2 {
+  font-size: 1.4rem; font-weight: 700; color: var(--success); margin-bottom: 8px;
+}
+.confirmation-meta { font-size: 0.85rem; color: var(--text2); }
+.confirmation-cards { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+.confirmation-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.confirmation-card.c-available { border-left: 4px solid var(--success); }
+.confirmation-card.c-off { border-left: 4px solid var(--danger); }
+.confirmation-card.c-pending { border-left: 4px solid var(--warning); }
+.confirmation-card.c-null { border-left: 4px solid var(--border); }
+.cc-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
+}
+.cc-day { font-weight: 700; font-size: 1rem; }
+.cc-status { font-size: 0.88rem; font-weight: 700; }
+.c-available .cc-status { color: var(--success); }
+.c-off .cc-status { color: var(--danger); }
+.c-pending .cc-status { color: var(--warning); }
+.c-null .cc-status { color: var(--text2); }
+.cc-time { font-size: 0.85rem; color: var(--text1); margin-top: 4px; }
+.cc-note {
+  font-size: 0.78rem; color: var(--text2); margin-top: 8px;
+  border-top: 1px solid var(--border); padding-top: 6px;
+}
+.confirmation-week-note {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px; margin: 4px 0 16px;
+}
+.confirmation-week-note .wn-label {
+  font-size: 0.75rem; color: var(--text2); margin-bottom: 6px; font-weight: 600;
+}
+.confirmation-week-note .wn-body { font-size: 0.85rem; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -489,14 +536,18 @@ a { color: var(--accent); }
   </div>
 </div>
 
-<!-- ===== Download Modal ===== -->
-<div class="modal-overlay" id="downloadModal">
-  <div class="modal" style="text-align:center;">
-    <h3 style="color:var(--success);">提出完了</h3>
-    <p>シフト希望を送信しました。</p>
-    <div class="modal-actions" style="flex-direction:column;">
-      <button class="btn btn-secondary" id="btnDownload">入力内容をダウンロード</button>
-      <button class="btn btn-primary" id="btnDownloadClose">閉じる</button>
+<!-- ===== Confirmation Screen ===== -->
+<div id="confirmationScreen" class="screen">
+  <div class="container" style="padding-bottom:48px;">
+    <div class="confirmation-header">
+      <div class="confirmation-checkmark">✓</div>
+      <h2>提出完了</h2>
+      <p id="confirmationMeta" class="confirmation-meta"></p>
+    </div>
+    <div id="confirmationCards" class="confirmation-cards"></div>
+    <div id="confirmationWeekNote" class="confirmation-week-note" style="display:none;"></div>
+    <div class="submit-area">
+      <button class="btn btn-primary" id="btnConfirmationBack">フォームに戻る</button>
     </div>
   </div>
 </div>
@@ -670,10 +721,13 @@ a { color: var(--accent); }
 
   /* ===== Screen Management ===== */
   function showScreen(name) {
-    [authScreen, pinScreen, mainScreen].forEach(s => s.classList.remove('active'));
+    const confirmationScreen = $('confirmationScreen');
+    [authScreen, pinScreen, mainScreen, confirmationScreen].forEach(s => s.classList.remove('active'));
     if (name === 'auth') authScreen.classList.add('active');
     else if (name === 'pin') pinScreen.classList.add('active');
     else if (name === 'main') mainScreen.classList.add('active');
+    else if (name === 'confirmation') confirmationScreen.classList.add('active');
+    window.scrollTo(0, 0);
   }
 
   /* ===== Firebase Operations ===== */
@@ -868,7 +922,7 @@ a { color: var(--accent); }
 
       var _sT = dayData.startTime || '', _eT = dayData.endTime || '';
       var _sH = _sT ? _sT.split(':')[0] : '', _sM = _sT ? _sT.split(':')[1] : '00';
-      var _eH = _eT ? _eT.split(':')[0] : '', _eM = _eT ? _eT.split(':')[1] : '00';
+      var _eH = _eT ? _eT.split(':')[0] : '25', _eM = _eT ? _eT.split(':')[1] : '00';
       var _dis = effectiveLocked ? ' disabled' : '';
 
       card.innerHTML =
@@ -890,7 +944,7 @@ a { color: var(--accent); }
           '<span class="time-sep">〜</span>' +
           '<label>終了</label>' +
           '<select id="endH_' + key + '"' + _dis + '>' + makeHourOptions(13, 25, _eH) + '</select>' +
-          '<button type="button" class="min-toggle' + (_eM === '30' ? ' active' : '') + '" id="endM_' + key + '" data-min="' + _eM + '"' + _dis + '>:' + _eM + '</button>' +
+          '<button type="button" class="min-toggle' + (_eM === '30' ? ' active' : '') + '" id="endM_' + key + '" data-min="' + _eM + '"' + _dis + (_eH === '25' ? ' disabled' : '') + '>:' + _eM + '</button>' +
         '</div>' +
         /* Day note */
         '<textarea class="day-note-input" id="note_' + key + '" placeholder="日別備考" rows="1"' +
@@ -919,6 +973,23 @@ a { color: var(--accent); }
         this.dataset.min = next;
         this.textContent = ':' + next;
         this.classList.toggle('active', next === '30');
+      });
+    });
+
+    /* Disable endM toggle when endH is 25 */
+    container.querySelectorAll('[id^="endH_"]').forEach(function(sel) {
+      sel.addEventListener('change', function() {
+        var dateKey = this.id.replace('endH_', '');
+        var minBtn = $('endM_' + dateKey);
+        if (!minBtn) return;
+        if (this.value === '25') {
+          minBtn.dataset.min = '00';
+          minBtn.textContent = ':00';
+          minBtn.classList.remove('active');
+          minBtn.disabled = true;
+        } else {
+          if (!effectiveLocked) minBtn.disabled = false;
+        }
       });
     });
 
@@ -1018,32 +1089,57 @@ a { color: var(--accent); }
     showLoading(false);
   }
 
-  /* ===== Generate Download Text ===== */
-  function generateDownloadText(data) {
-    let txt = 'シフト提出内容\n';
-    txt += 'キャスト名: ' + data.castName + '\n';
-    txt += '対象週: ' + data.weekStart + '\n';
-    txt += '提出日時: ' + data.submittedAt + '\n\n';
+  /* ===== Confirmation Screen ===== */
+  function showConfirmationScreen(data) {
     const dates = getWeekDates(parseDate(data.weekStart));
+    const dateRange = formatDateShort(dates[0]) + ' 〜 ' + formatDateShort(dates[6]);
+    $('confirmationMeta').textContent = data.castName + ' ｜ ' + dateRange;
+
+    const cardsDiv = $('confirmationCards');
+    cardsDiv.innerHTML = '';
     dates.forEach(d => {
       const key = toDateStr(d);
       const day = data.days[key] || {};
-      txt += formatDateShort(d) + ' : ';
+      const card = document.createElement('div');
+      let cls = 'confirmation-card';
+      let statusText = '未入力';
+      let timeText = '';
       if (day.status === 'available') {
-        txt += '出勤可 ' + (day.startTime || '') + '〜' + (day.endTime || '');
+        cls += ' c-available'; statusText = '出勤可';
+        if (day.startTime || day.endTime)
+          timeText = (day.startTime || '--:--') + ' 〜 ' + (day.endTime || '--:--');
       } else if (day.status === 'off') {
-        txt += '休み';
+        cls += ' c-off'; statusText = '休み';
       } else if (day.status === 'pending') {
-        txt += '保留';
+        cls += ' c-pending'; statusText = '保留';
       } else {
-        txt += '未入力';
+        cls += ' c-null';
       }
-      if (day.note) txt += ' (' + day.note + ')';
-      txt += '\n';
+      card.className = cls;
+      let html = '<div class="cc-header">' +
+        '<span class="cc-day">' + formatDateShort(d) + '</span>' +
+        '<span class="cc-status">' + statusText + '</span>' +
+        '</div>';
+      if (timeText) html += '<div class="cc-time">' + escapeHtml(timeText) + '</div>';
+      if (day.note) html += '<div class="cc-note">' + escapeHtml(day.note) + '</div>';
+      card.innerHTML = html;
+      cardsDiv.appendChild(card);
     });
-    if (data.weekNote) txt += '\n週全体備考: ' + data.weekNote;
-    return txt;
+
+    const weekNoteDiv = $('confirmationWeekNote');
+    if (data.weekNote) {
+      weekNoteDiv.style.display = '';
+      weekNoteDiv.innerHTML = '<div class="wn-label">週全体備考</div><div class="wn-body">' + escapeHtml(data.weekNote) + '</div>';
+    } else {
+      weekNoteDiv.style.display = 'none';
+    }
+
+    showScreen('confirmation');
   }
+
+  $('btnConfirmationBack').addEventListener('click', function () {
+    showScreen('main');
+  });
 
   /* ===== Event: Auth Next ===== */
   $('btnAuthNext').addEventListener('click', async function () {
@@ -1306,28 +1402,11 @@ a { color: var(--accent); }
       $('summaryToggle').style.display = 'flex';
       renderSummary(data, currentWeekMonday);
       showToast('提出しました', 'success');
-      /* Show download modal */
-      $('downloadModal').classList.add('show');
+      showConfirmationScreen(data);
     } catch (e) {
       showToast('提出に失敗しました: ' + e.message, 'error');
     }
     showLoading(false);
-  });
-
-  /* ===== Download ===== */
-  $('btnDownload').addEventListener('click', function () {
-    if (!currentShiftData) return;
-    const text = generateDownloadText(currentShiftData);
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'shift_' + currentCastName + '_' + toDateStr(currentWeekMonday) + '.txt';
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-  $('btnDownloadClose').addEventListener('click', function () {
-    $('downloadModal').classList.remove('show');
   });
 
   /* ===== Init ===== */
